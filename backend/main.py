@@ -8,9 +8,9 @@ import logging
 app = Flask(__name__)
 CORS(app)  # To allow React frontend to communicate with Flask backend
 
-# Load the pre-trained model
-with open('KNN_C_Churn.pkl', 'rb') as f:
-    knn_model = pickle.load(f)
+# Use Randomforest pre-trained model
+with open('Random_forest.pkl', 'rb') as f:
+    Randomforest_model = pickle.load(f)
 
 # Load the saved scaler
 with open('scaler.pkl', 'rb') as f:
@@ -92,7 +92,7 @@ def submit():
         
 
         # Make prediction using the pre-trained model
-        prediction = knn_model.predict(features_df)
+        prediction = Randomforest_model.predict(features_df)
         print("Prediction:", prediction)
 
         # Return the prediction result as JSON
