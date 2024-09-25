@@ -1,80 +1,106 @@
-from flask import jsonify, request, url_for, redirect, render_template
+from flask import Flask, request, jsonify
 import pandas as pd
-import pickle
-from sklearn.preprocessing import StandardScaler, LabelEncoder
-from flask import Flask
 from flask_cors import CORS
-
+import pickle
+import sys
+import logging
 
 app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": "*"}})
+CORS(app)  # To allow React frontend to communicate with Flask backend
 
-model = pickle.load(open("Random_forest.pkl", "rb"))
+# Load the pre-trained model
+with open('KNN_C_Churn.pkl', 'rb') as f:
+    knn_model = pickle.load(f)
 
+# Load the saved scaler
+with open('scaler.pkl', 'rb') as f:
+    scaler = pickle.load(f)
 
-@app.route('/api/users', methods = ['POST'])
-def predict_Churn():
-    try:
-        data = request.json
-
-        # Extract values from the request
-        gender = data.get('gender', '')
-        SeniorCitizen = data.get('SeniorCitizen', '')
-        Partner = data.get('Partner', '')
-        Dependents = data.get('Dependents', '')
-        tenure = data.get('tenure', '')
-        PhoneService = data.get('PhoneService', '')
-        MultipleLines = data.get('MultipleLines', '')
-        InternetService = data.get('InternetService', '')
-        OnlineSecurity = data.get('OnlineSecurity', '')
-        OnlineBackup = data.get('OnlineBackup', '')
-        DeviceProtection = data.get('DeviceProtection', '')
-        TechSupport = data.get('TechSupport', '')
-        StreamingTV = data.get('StreamingTV', '')
-        StreamingMovies = data.get('StreamingMovies', '')
-        Contract = data.get('Contract', '')
-        PaperlessBilling = data.get('PaperlessBilling', '')
-        PaymentMethod = data.get('PaymentMethod', '')
-        MonthlyCharges = data.get('MonthlyCharges', '')
-        TotalCharges = data.get('TotalCharges', '')
-
-        df = preProcess(gender, SeniorCitizen, Partner,Dependents,tenure,PhoneService,MultipleLines,InternetService,OnlineSecurity,OnlineBackup,DeviceProtection,TechSupport,StreamingTV,StreamingMovies,Contract,PaperlessBilling,PaymentMethod,MonthlyCharges,TotalCharges)
-
-        customer_churn_prediction = model.predict(df)
-
+# Load the saved label encoders
+with open('label_encoders.pkl', 'rb') as f:
+    label_encoders = pickle.load(f)
     
 
+def object_to_int(dataframe_series, column_name=None):
+    if dataframe_series.dtype == 'object':
+        le = label_encoders.get(column_name)
+        if le:
+            dataframe_series = le.transform(dataframe_series)
+    return dataframe_series
 
-        return jsonify({
-            "Churn": str(customer_churn_prediction),
-        })
+@app.route('/predict', methods=['POST'])
+def submit():
+    try:
+        # Get features from the frontend
+        features = request.get_json().get('features', {})
+
+        # Desired order of the fields
+        ordered_keys = [
+            "SeniorCitizen",
+            "Partner",
+            "Dependents",
+            "tenure",
+            "OnlineSecurity",
+            "OnlineBackup",
+            "DeviceProtection",
+            "TechSupport",
+            "Contract",
+            "PaperlessBilling",
+            "PaymentMethod",
+            "MonthlyCharges",
+            "TotalCharges"
+        ]
+        # Create a new dictionary with the desired order
+        ordered_features = {key: features.get(key, '') for key in ordered_keys}
+        # Convert features to DataFrame
+        features_df = pd.DataFrame([ordered_features])
+
+        # Loop through each row in the DataFrame
+        for index, row in features_df.iterrows():
+            print(f"Row {index + 1}:")
+            
+            # Print each attribute (column) and its value
+            for column in features_df.columns:
+                value = row[column]
+                dtype = features_df[column].dtype
+                print(f"  {column}: {value} (Type: {dtype})")
+            
+            print("\n")
+
+        # Identify integer columns to scale
+        int_columns = features_df.select_dtypes(include=['int64', 'int32', 'float64']).columns
+                
+        # Scale only the integer columns
+        features_df[int_columns] = scaler.transform(features_df[int_columns])
+        print("After scaling integer columns:", features_df)
+
+        # Apply label encoding to necessary categorical columns
+        for column in features_df.columns:
+            features_df[column] = object_to_int(features_df[column], column_name=column)
+        print("After label encoding:")
+        # Loop through each row in the DataFrame
+        for index, row in features_df.iterrows():
+            print(f"Row {index + 1}:")
+            
+            # Print each attribute (column), its value, and its data type
+            for column in features_df.columns:
+                value = row[column]
+                dtype = features_df[column].dtype
+                print(f"  {column}: {value} (Type: {dtype})")
+            
+            print("\n")
+        
+
+        # Make prediction using the pre-trained model
+        prediction = knn_model.predict(features_df)
+        print("Prediction:", prediction)
+
+        # Return the prediction result as JSON
+        return jsonify({'prediction': int(prediction[0])})
     
     except Exception as e:
-        # Log the exception and return a 500 response
-        print(f"Error occurred: {str(e)}")
-        return jsonify({"error": "An unexpected error occurred. Please try again later."}), 500
+        print("Error during prediction:", str(e))  # Print error message
+        return jsonify({'error': str(e)})
 
-
-def preProcess(gender, SeniorCitizen, Partner,Dependents,tenure,PhoneService,MultipleLines,InternetService,OnlineSecurity,OnlineBackup,DeviceProtection,TechSupport,StreamingTV,StreamingMovies,Contract,PaperlessBilling,PaymentMethod,MonthlyCharges,TotalCharges):
-    inputs = {'gender': [gender], 'SeniorCitizen': [SeniorCitizen],'Partner': [Partner], 'Dependents': [Dependents],'tenure': [tenure],'PhoneService': [PhoneService],'MultipleLines': [MultipleLines],'InternetService': [InternetService],'OnlineSecurity': [OnlineSecurity],'OnlineBackup': [OnlineBackup],'DeviceProtection': [DeviceProtection],'TechSupport': [TechSupport],'StreamingTV': [StreamingTV],'StreamingMovies': [StreamingMovies],'Contract': [Contract],'PaperlessBilling': [PaperlessBilling],'PaymentMethod': [PaymentMethod],'MonthlyCharges': [MonthlyCharges],'TotalCharges': [TotalCharges]}       
-    df = pd.DataFrame(inputs)
-    
-    def object_to_int(dataframe_series):
-        if dataframe_series.dtype=='object':
-            dataframe_series = LabelEncoder().fit_transform(dataframe_series)
-        return dataframe_series
-
-    df = df.apply(lambda x: object_to_int(x))
-
-    
-    num_cols = ["tenure", 'MonthlyCharges', 'TotalCharges']
-    scaler= StandardScaler()
-    df[num_cols] = scaler.fit_transform(df[num_cols])
-
-    return df
-
-
-
-if __name__ == "__main__":
-    
+if __name__ == '__main__':
     app.run(debug=True)
