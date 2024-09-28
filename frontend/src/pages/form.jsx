@@ -79,10 +79,10 @@ const form = () => {
   };
 
   return (
-    <Container className="mt-4">
+    <Container className="mt-4" style={{}}>
       <center>
         <Typography variant="h4" gutterBottom>
-          Predict Churn
+          Customer Churn Predict
         </Typography>
       </center>
       <Row>
