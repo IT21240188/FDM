@@ -9,7 +9,7 @@ app = Flask(__name__)
 CORS(app)  # To allow React frontend to communicate with Flask backend
 
 # Use Randomforest pre-trained model
-with open('models/KNN_C_Churn.pkl', 'rb') as f:
+with open('models/Random_forest.pkl', 'rb') as f:
     Randomforest_model = pickle.load(f)
 
 # Load the saved scaler
