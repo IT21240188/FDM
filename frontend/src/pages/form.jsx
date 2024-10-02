@@ -409,7 +409,7 @@ const form = () => {
                   />
                 </Col>
                 <Col>
-                  <p style={{ marginTop: '100%', fontSize: 'x-large', fontWeight: 'bold', textAlign: 'center' }}>Customer will leave soon</p>
+                  <p style={{ marginTop: '100%', fontSize: 'x-large', fontWeight: 'bold', textAlign: 'center' }}>Oh no! The customer might leave us soon!</p>
                 </Col>
               </Row>
 
@@ -426,7 +426,7 @@ const form = () => {
                   />
                 </Col>
                 <Col>
-                  <p style={{ marginTop: '100%', fontSize: 'x-large', fontWeight: 'bold', textAlign: 'center' }}>Customer is Happy</p>
+                  <p style={{ marginTop: '100%', fontSize: 'x-large', fontWeight: 'bold', textAlign: 'center' }}>Hooray! The customer is sticking with us!</p>
                 </Col>
               </Row>
             </>
