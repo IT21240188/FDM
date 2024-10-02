@@ -13,6 +13,7 @@ import FormLabel from '@mui/material/FormLabel';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
+import toast from 'react-hot-toast';
 
 const form = () => {
   const [features, setFeatures] = useState({
@@ -31,6 +32,7 @@ const form = () => {
     TotalCharges: '',
   });
   const [prediction, setPrediction] = useState(null);
+  const [errors, setErrors] = useState({});
 
   const handleRadioChange = (e, field) => {
     setFeatures({
@@ -65,8 +67,23 @@ const form = () => {
   };
   console.log(features);
 
+  const validateForm = () => {
+    const newErrors = {};
+    Object.keys(features).forEach((key) => {
+      if (!features[key]) {
+        newErrors[key] = 'This field is required';
+      }
+    });
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   // Send features to backend for prediction
   const handlePredict = () => {
+    if (!validateForm()) {
+      toast.error('All fields Required!')
+      return;
+    }
     axios
       .post('http://127.0.0.1:5000/predict', { features })
       .then((response) => {
@@ -98,7 +115,7 @@ const form = () => {
           >
             <Row className="mb-3">
               <Col>
-                <FormControl>
+                <FormControl required error={!!errors.SeniorCitizen}>
                   <FormLabel id="SeniorCitizen">Senior Citizen</FormLabel>
                   <RadioGroup
                     row
@@ -120,7 +137,7 @@ const form = () => {
                 </FormControl>
               </Col>
               <Col>
-                <FormControl>
+                <FormControl required error={!!errors.Partner}>
                   <FormLabel id="Partner">Partner</FormLabel>
                   <RadioGroup
                     row
@@ -142,7 +159,7 @@ const form = () => {
                 </FormControl>
               </Col>
               <Col>
-                <FormControl>
+                <FormControl required error={!!errors.Dependents}>
                   <FormLabel id="Dependents">Dependents</FormLabel>
                   <RadioGroup
                     row
@@ -167,7 +184,7 @@ const form = () => {
 
             <Row className="mb-3">
               <Col>
-                <FormControl>
+                <FormControl required error={!!errors.OnlineSecurity}>
                   <FormLabel id="OnlineSecurity">Online Security</FormLabel>
                   <RadioGroup
                     row
@@ -189,7 +206,7 @@ const form = () => {
                 </FormControl>
               </Col>
               <Col>
-                <FormControl>
+                <FormControl required error={!!errors.OnlineBackup}>
                   <FormLabel id="OnlineBackup">Online Backup</FormLabel>
                   <RadioGroup
                     row
@@ -211,7 +228,7 @@ const form = () => {
                 </FormControl>
               </Col>
               <Col>
-                <FormControl>
+                <FormControl required error={!!errors.DeviceProtection}>
                   <FormLabel id="DeviceProtection">Device Protection</FormLabel>
                   <RadioGroup
                     row
@@ -237,7 +254,7 @@ const form = () => {
             <Row className="mb-3">
               <Col>
                 <Box sx={{ minWidth: 120 }}>
-                  <FormControl fullWidth size="small">
+                  <FormControl fullWidth size="small" required error={!!errors.Contract}>
                     <InputLabel id="Contract">Contract</InputLabel>
                     <Select
                       labelId="Contract"
@@ -253,7 +270,7 @@ const form = () => {
               </Col>
               <Col>
                 <Box sx={{ minWidth: 120 }}>
-                  <FormControl fullWidth size="small">
+                  <FormControl fullWidth size="small" required error={!!errors.PaymentMethod}>
                     <InputLabel id="PaymentMethod">Payment Method</InputLabel>
                     <Select
                       labelId="PaymentMethod"
@@ -276,7 +293,7 @@ const form = () => {
 
             <Row className="mb-3">
               <Col>
-                <FormControl>
+                <FormControl required error={!!errors.TechSupport}>
                   <FormLabel id="TechSupport">Tech Support</FormLabel>
                   <RadioGroup
                     row
@@ -298,7 +315,7 @@ const form = () => {
                 </FormControl>
               </Col>
               <Col>
-                <FormControl>
+                <FormControl required error={!!errors.PaperlessBilling}>
                   <FormLabel id="PaperlessBilling">Paperless Billing</FormLabel>
                   <RadioGroup
                     row
@@ -331,6 +348,9 @@ const form = () => {
                   onChange={handleChange}
                   fullWidth
                   size="small"
+                  required
+                  error={!!errors.tenure}
+                  helperText={errors.tenure}
                 />
               </Col>
               <Col>
@@ -342,6 +362,9 @@ const form = () => {
                   onChange={handleChange}
                   fullWidth
                   size="small"
+                  required
+                  error={!!errors.MonthlyCharges}
+                  helperText={errors.MonthlyCharges}
                 />
               </Col>
             </Row>
@@ -355,6 +378,9 @@ const form = () => {
                   onChange={handleChange}
                   fullWidth
                   size="small"
+                  required
+                  error={!!errors.TotalCharges}
+                  helperText={errors.TotalCharges}
                 />
               </Col>
             </Row>
@@ -374,20 +400,35 @@ const form = () => {
         <Col>
           {prediction == 1 && (
             <>
-              <img
-                src="/churn_customer.png"
-                width={400}
-                style={{ animation: 'slideIn 0.6s ease-out forwards' }}
-              />
+              <Row>
+                <Col>
+                  <img
+                    src="/churn_customer.png"
+                    width={400}
+                    style={{ animation: 'slideIn 0.6s ease-out forwards' }}
+                  />
+                </Col>
+                <Col>
+                  <p style={{ marginTop: '100%', fontSize: 'x-large', fontWeight: 'bold', textAlign: 'center' }}>Customer will leave soon</p>
+                </Col>
+              </Row>
+
             </>
           )}
           {prediction == 0 && (
             <>
-              <img
-                src="/happy_customer.png"
-                width={400}
-                style={{ animation: 'slideIn 0.6s ease-out forwards' }}
-              />
+              <Row>
+                <Col>
+                  <img
+                    src="/happy_customer.png"
+                    width={400}
+                    style={{ animation: 'slideIn 0.6s ease-out forwards' }}
+                  />
+                </Col>
+                <Col>
+                  <p style={{ marginTop: '100%', fontSize: 'x-large', fontWeight: 'bold', textAlign: 'center' }}>Customer is Happy</p>
+                </Col>
+              </Row>
             </>
           )}
         </Col>
