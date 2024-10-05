@@ -263,6 +263,7 @@ const form = () => {
                       onChange={handleSelectChange}
                     >
                       <MenuItem value="Month-to-month">Month-to-month</MenuItem>
+                      <MenuItem value="Two year">Two year</MenuItem>
                       <MenuItem value="One year">One year</MenuItem>
                     </Select>
                   </FormControl>
@@ -284,6 +285,9 @@ const form = () => {
                       <MenuItem value="Mailed check">Mailed check</MenuItem>
                       <MenuItem value="Bank transfer (automatic)">
                         Bank transfer (automatic)
+                      </MenuItem>
+                      <MenuItem value="Credit card (automatic)">
+                        Credit card (automatic)
                       </MenuItem>
                     </Select>
                   </FormControl>
